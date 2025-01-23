@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Messenger App</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        .navbar {
+            background-color: #6200ea;
+            color: white;
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .navbar a {
+            color: white;
+            text-decoration: none;
+            margin: 0 10px;
+        }
+        .container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        .left-menu {
+            background-color: #f3f3f3;
+            width: 25%;
+            padding: 20px;
+            overflow-y: auto;
+            border-right: 1px solid #ddd;
+        }
+        .left-menu h3 {
+            margin-top: 0;
+        }
+        .left-menu ul {
+            list-style: none;
+            padding: 0;
+        }
+        .left-menu li {
+            padding: 10px;
+            cursor: pointer;
+            border-bottom: 1px solid #ddd;
+        }
+        .left-menu li:hover {
+            background-color: #e0e0e0;
+        }
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+        }
+        #chat-box {
+            flex: 1;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 10px;
+            overflow-y: auto;
+            background-color: #fafafa;
+            margin-bottom: 10px;
+        }
+        #message-input {
+            width: calc(100% - 80px);
+            padding: 10px;
+            margin-right: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        #send-button {
+            padding: 10px 20px;
+            background-color: #6200ea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        #send-button:hover {
+            background-color: #4500b0;
+        }
+        .right-panel {
+            width: 25%;
+            background-color: #f9f9f9;
+            padding: 20px;
+            border-left: 1px solid #ddd;
+        }
+        .footer {
+            background-color: #6200ea;
+            color: white;
+            text-align: center;
+            padding: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar">
+        {% if user.is_authenticated %}
+            <span>Welcome, {{ user.username }}</span>
+            <form action="{% url 'logout' %}" method="post" style="display: inline;">
+                {% csrf_token %}
+                <button type="submit" style="background: none; border: none; color: white; cursor: pointer;">
+                    Logout
+                </button>
+            </form>
+        {% else %}
+            <a href="{% url 'login' %}">Login</a>
+            <a href="{% url 'signup' %}">Signup</a>
+        {% endif %}
+    </nav>
+
+    <!-- Main container -->
+    <div class="container">
+        <!-- Left Menu -->
+        <aside class="left-menu">
+            {% if user.is_authenticated %}
+                <h3>Users</h3>
+                <ul>
+                    {% for other_user in users %}
+                        <li onclick="selectUser('{{ other_user.username }}')">{{ other_user.username }}</li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p>Please log in to view users.</p>
+            {% endif %}
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            {% if user.is_authenticated %}
+                <h2 id="chat-title">Select a user to chat</h2>
+                <div id="chat-box">
+                    {% for message in messages %}
+                        <div>
+                            <strong>{{ message.sender.username }}</strong>: {{ message.content }}
+                        </div>
+                    {% endfor %}
+                </div>
+                <div>
+                    <input type="text" id="message-input" placeholder="Type a message..." />
+                    <button id="send-button" onclick="sendMessage()">Send</button>
+                </div>
+            {% else %}
+                <p>Please log in to start chatting.</p>
+            {% endif %}
+        </main>
+
+        <!-- Right Panel -->
+        <aside class="right-panel">
+            <h3>Right Panel</h3>
+            <p>Additional Content</p>
+        </aside>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">Footer Content</footer>
+
+    <!-- JavaScript -->
+    <script>
+        let currentUser = null;
+
+        function selectUser(username) {
+            currentUser = username;
+            document.getElementById('chat-title').innerText = `Chat with ${username}`;
+            document.getElementById('chat-box').innerHTML = ''; // Clear chat box
+            // Load chat messages from the server
+        }
+
+        function sendMessage() {
+            const messageInput = document.getElementById('message-input');
+            const message = messageInput.value.trim();
+
+            if (message && currentUser) {
+                // Display the message in the chat box
+                const chatBox = document.getElementById('chat-box');
+                const messageElement = document.createElement('div');
+                messageElement.textContent = `You: ${message}`;
+                chatBox.appendChild(messageElement);
+
+                // Send the message to the server via WebSocket
+                messageInput.value = '';
+            }
+        }
+    </script>
+</body>
+</html>
